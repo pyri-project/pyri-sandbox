@@ -1,0 +1,30 @@
+service tech.pyri.sandbox
+
+stdver 0.10
+
+import com.robotraconteur.datetime
+import com.robotraconteur.device
+import com.robotraconteur.identifier
+import com.robotraconteur.action
+
+using com.robotraconteur.datetime.DateTimeUTC
+using com.robotraconteur.device.Device
+using com.robotraconteur.device.DeviceInfo
+using com.robotraconteur.identifier.Identifier
+using com.robotraconteur.action.ActionStatusCode
+
+struct ProcedureExecutionStatus
+    field ActionStatusCode action_status
+    field string{list} printed
+    field string result_code
+end
+
+object PyriSandbox
+
+    implements Device
+
+    property DeviceInfo device_info [readonly,nolock]
+
+    function ProcedureExecutionStatus{generator} execute_procedure(string procedure_name, string{list} parameters)
+
+end

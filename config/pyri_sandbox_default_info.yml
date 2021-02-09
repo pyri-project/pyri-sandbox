@@ -1,0 +1,20 @@
+device:
+  name: pyri_sandbox
+manufacturer:
+  name: PyRI_Project
+  uuid: 244389f3-35d5-4f9f-a244-c89649ce2a18
+model:
+  name: pyri_sandbox
+  uuid: b22cfc09-2add-492e-97aa-710ba2022b78
+user_description: Sandbox to execute PyRI python and blockly procedures
+serial_number: 1
+device_classes:
+  - class_identifier:
+      name: software_execution_sandbox
+      uuid: 38abaae2-2470-4ec8-a232-2b089a9f1759
+    subclasses:
+      - python
+      - blockly
+implemented_types:
+  - com.robotraconteur.device.Device
+  - tech.pyri.sandbox.PyriSandbox
