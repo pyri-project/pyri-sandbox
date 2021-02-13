@@ -20,6 +20,7 @@ setup(
     },
     entry_points = {
         'pyri.plugins.robdef': ['pyri-sandbox-robdef=pyri.sandbox.robdef:get_robdef_factory'],
-        'console_scripts': ['pyri-sandbox-service = pyri.sandbox.__main__:main']
+        'console_scripts': ['pyri-sandbox-service = pyri.sandbox.__main__:main'],
+        'pyri.plugins.sandbox_functions': ['pyri-robotics-sandbox-functions=pyri.sandbox.sandbox_functions:get_sandbox_functions_factory']
     }
 )

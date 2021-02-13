@@ -9,7 +9,8 @@ from pyri.device_manager_client import DeviceManagerClient
 from .restricting_transformer import PyriRestrictingNodeTransformer
 from .blockly_compiler import BlocklyCompiler
 from . import guards
-from pyri.sandbox_context import PyriSandboxContext
+from pyri.sandbox_context import PyriSandboxContext, PyriSandboxContextScope
+from pyri.plugins.sandbox_functions import get_all_plugin_sandbox_functions
 
 import copy
 
@@ -70,20 +71,23 @@ class PyriSandbox():
         else:
             assert False, "Invalid procedure type (must be pyri or blockly)"
         
+        plugin_sandbox_functions = get_all_plugin_sandbox_functions()
+
         loc = {}
         
         byte_code = compile_restricted(pyri_src, '<pyri_sandbox>', 'exec',  policy = _policy)
-        sandbox_builtins = guards.get_pyri_builtins_with_name_guard()
+        sandbox_builtins = guards.get_pyri_builtins_with_name_guard(plugin_sandbox_functions.keys())
         sandbox_globals = {'__builtins__': sandbox_builtins}
+        sandbox_globals.update(plugin_sandbox_functions)
         print_collector = PrintCollector()
         sandbox_globals["_print_"] =print_collector
 
-        return ExecuteProcedureGenerator(procedure_name, byte_code, sandbox_builtins, sandbox_globals, loc, params, print_collector, self._status_type)
+        return ExecuteProcedureGenerator(procedure_name, byte_code, sandbox_builtins, sandbox_globals, loc, params, print_collector, self._node, self._device_manager, self._status_type)
 
 
 class ExecuteProcedureGenerator:
 
-    def __init__(self, procedure_name, byte_code, builtins, sandbox_globals,loc, params, print_collector, status_type):
+    def __init__(self, procedure_name, byte_code, builtins, sandbox_globals,loc, params, print_collector, node, device_manager, status_type):
         self._procedure_name = procedure_name
         self._byte_code = byte_code
         self._bultins = builtins
@@ -92,6 +96,8 @@ class ExecuteProcedureGenerator:
         self._params = params
         self._status_type = status_type
         self._print_collector = print_collector
+        self._node = node
+        self._device_manager = device_manager
         self._run = False
 
     def Next(self):
@@ -99,23 +105,23 @@ class ExecuteProcedureGenerator:
             raise StopIterationException("Procedure completed")
 
         self._run = True
+        with PyriSandboxContextScope(self._node, self._device_manager, self._print_collector):
+            #TODO: Execute in different thread
+            exec(self._byte_code, self._globals, self._loc)
+            if self._params is None:
+                res = self._loc[self._procedure_name]()
+            else:
+                res = self._loc[self._procedure_name](*self._params)
 
-        #TODO: Execute in different thread
-        exec(self._byte_code, self._globals, self._loc)
-        if self._params is None:
-            res = self._loc[self._procedure_name]()
-        else:
-            res = self._loc[self._procedure_name](*self._params)
+            assert isinstance(res,str) or res is None, "Result of procedure must be string"
 
-        assert isinstance(res,str) or res is None, "Result of procedure must be string"
+            ret = self._status_type()
+            # TODO: use constants
+            ret.action_status = 3
+            ret.printed = self._print_collector.printed
+            ret.result_code = res or "SUCCESS"
 
-        ret = self._status_type()
-        # TODO: use constants
-        ret.action_status = 3
-        ret.printed = self._print_collector.printed
-        ret.result_code = res or "SUCCESS"
-
-        return ret
+            return ret
 
 
         
