@@ -7,13 +7,22 @@ import argparse
 from RobotRaconteurCompanion.Util.InfoFileLoader import InfoFileLoader
 from RobotRaconteurCompanion.Util.AttributesUtil import AttributesUtil
 from pyri.plugins import robdef as robdef_plugins
+import appdirs
+from pathlib import Path
+import subprocess
+from importlib import resources
 
 def main():
-    parser = argparse.ArgumentParser(description="PyRI Variable Storage Service Node")
+
+    if "--install-blockly-compiler" in sys.argv:        
+        install_blockly_compiler()
+        exit(0)
+
+    parser = argparse.ArgumentParser(description="PyRI Variable Storage Service Node")    
     parser.add_argument("--device-info-file", type=argparse.FileType('r'),default=None,required=True,help="Device info file for sandbox service (required)")
     parser.add_argument('--device-manager-url', type=str, default=None,required=True,help="Robot Raconteur URL for device manager service (required)")
     parser.add_argument("--wait-signal",action='store_const',const=True,default=False, help="wait for SIGTERM or SIGINT (Linux only)")
-    
+    parser.add_argument("--install-blockly-compiler", action="store_true",default=False,help="Install the Blockly compiler for current user")
     
     args, _ = parser.parse_known_args()
 
@@ -49,6 +58,24 @@ def main():
                 raw_input("Server started, press enter to quit...")
 
         dev_manager.close()
+
+def install_blockly_compiler():
+    print("Installing blockly compiler...")
+
+    compiler_dir = Path(appdirs.user_data_dir(appname="pyri-sandbox", appauthor="pyri-project", roaming=False))
+    
+    compiler_dir = compiler_dir.joinpath("blockly_compiler")
+    print(f"Installing compiler to: {compiler_dir}")
+    compiler_dir.mkdir(exist_ok=True,parents=True)
+    subprocess.check_call("npm install node-blockly",cwd=str(compiler_dir),shell=True)
+
+    compile_script = resources.read_text(__package__,"compile_blockly.js")
+
+    with open(compiler_dir.joinpath("compile_blockly.js"),"w") as f:
+        f.write(compile_script)
+
+    print("Done!")
+
 
 if __name__ == "__main__":
     sys.exit(main() or 0)

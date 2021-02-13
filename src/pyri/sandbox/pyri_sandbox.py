@@ -48,6 +48,8 @@ class PyriSandbox():
         self._status_type = self._node.GetStructureType('tech.pyri.sandbox.ProcedureExecutionStatus')
         self._action_const = self._node.GetConstants('com.robotraconteur.action')
 
+        self._blockly_compiler = BlocklyCompiler()
+
         self._device_manager = DeviceManagerClient(device_manager_url)
         self._device_manager.refresh_devices(1)
 
@@ -66,8 +68,8 @@ class PyriSandbox():
         if "pyri" in procedure_tags:
             pyri_src = procedure_src.data
         elif "blockly" in procedure_tags:
-            blockly_compiler = BlocklyCompiler()
-            pyri_src = blockly_compiler.compile(procedure_name, procedure_src.data)
+            
+            pyri_src = self._blockly_compiler.compile(procedure_name, procedure_src.data)
         else:
             assert False, "Invalid procedure type (must be pyri or blockly)"
         
@@ -84,6 +86,11 @@ class PyriSandbox():
 
         return ExecuteProcedureGenerator(procedure_name, byte_code, sandbox_builtins, sandbox_globals, loc, params, print_collector, self._node, self._device_manager, self._status_type)
 
+    def _close(self):
+        try:
+            self._blockly_compiler.close()
+        except:
+            pass
 
 class ExecuteProcedureGenerator:
 
@@ -123,6 +130,11 @@ class ExecuteProcedureGenerator:
 
             return ret
 
+    def Close(self):
+        pass
+
+    def Abort(self):
+        pass
 
         
 

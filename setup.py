@@ -14,7 +14,7 @@ setup(
     install_requires=[
         'pyri-common'
     ],
-    tests_require=['pytest','pytest-asyncio'],
+    tests_require=['pytest','pytest-asyncio','appdirs'],
     extras_require={
         'test': ['pytest','pytest-asyncio']
     },
