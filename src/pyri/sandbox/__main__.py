@@ -69,9 +69,9 @@ def install_blockly_compiler():
     compiler_dir.mkdir(exist_ok=True,parents=True)
     subprocess.check_call("npm install node-blockly",cwd=str(compiler_dir),shell=True)
 
-    compile_script = resources.read_text(__package__,"compile_blockly.js")
+    compile_script = resources.read_text(__package__,"blockly_compile.js")
 
-    with open(compiler_dir.joinpath("compile_blockly.js"),"w") as f:
+    with open(compiler_dir.joinpath("blockly_compile.js"),"w") as f:
         f.write(compile_script)
 
     print("Done!")

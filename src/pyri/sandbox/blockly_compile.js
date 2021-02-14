@@ -28,6 +28,23 @@ function compile_blockly(working_dir)
     
     const xmlText = fs.readFileSync(path.join(working_dir,"blockly_src.xml"), 'utf8')
     
+    fs.readdirSync(working_dir).forEach(file => {
+        if (file.match(/^blockdef_[A-Za-z0-9_]+\.json$/))
+        {
+            block_json_text = fs.readFileSync(path.join(working_dir,file), 'utf8')
+            block_json = JSON.parse(block_json_text)
+            Blockly.defineBlocksWithJsonArray([block_json])
+        }
+
+        if (file.match(/^blockpygen_[A-Za-z0-9_]+\.js$/))
+        {
+            // We need to include the js generator directly. This isn't a secure design,
+            // but there isn't much that can be done otherwise
+            block_gen_js_text = fs.readFileSync(path.join(working_dir,file),'utf8')
+            eval(block_gen_js_text)
+        }
+    });
+
     var xml = Blockly.Xml.textToDom(xmlText);
 
     var workspace = new Blockly.Workspace();
@@ -80,7 +97,7 @@ const requestListener = function (req, res) {
   }
   
   const server = http.createServer(requestListener);
-  listener = server.listen(0,'127.0.0.1',function()
+  listener = server.listen(57001,'127.0.0.1',function()
   { 
     port = listener.address().port
     console.log("ready;" + port)

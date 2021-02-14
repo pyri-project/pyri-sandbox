@@ -8,7 +8,7 @@ import re
 from pathlib import Path
 import appdirs
 
-compiler_node_script = Path(appdirs.user_data_dir(appname="pyri-sandbox", appauthor="pyri-project", roaming=False)).joinpath("blockly_compiler").joinpath("compile_blockly.js")
+compiler_node_script = Path(appdirs.user_data_dir(appname="pyri-sandbox", appauthor="pyri-project", roaming=False)).joinpath("blockly_compiler").joinpath("blockly_compile.js")
 
 class BlocklyCompiler:
     def __init__(self):
@@ -30,11 +30,20 @@ class BlocklyCompiler:
             #TODO: include error message
             raise Exception(f"Blockly compile error: {res_line.decode('utf8').strip()}")
 
-    def compile(self, procedure_name, procedure_src):
+    def compile(self, procedure_name, procedure_src, blockly_blocks):
         with tempfile.TemporaryDirectory() as tmpdir:
+
+            for b in blockly_blocks.values():
+                safe_name = re.sub('[^0-9a-zA-Z_]+', '', b.name)                
+                with open(path.join(tmpdir,f"blockdef_{safe_name}.json"),"w") as f_block:
+                    f_block.write(b.json)
+
+                with open(path.join(tmpdir,f"blockpygen_{safe_name}.js"),"w") as f_block_gen:
+                    f_block_gen.write(b.python_generator)
+
             with open(path.join(tmpdir,"blockly_src.xml"),"w") as f_out:
                 f_out.write(procedure_src)
-
+            
             self._call_p(tmpdir)
 
             with open(path.join(tmpdir,"blockly_src_compiled.py"),"r") as f_in:

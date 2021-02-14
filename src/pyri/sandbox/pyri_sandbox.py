@@ -11,6 +11,7 @@ from .blockly_compiler import BlocklyCompiler
 from . import guards
 from pyri.sandbox_context import PyriSandboxContext, PyriSandboxContextScope
 from pyri.plugins.sandbox_functions import get_all_plugin_sandbox_functions
+from pyri.plugins.blockly import get_all_blockly_blocks
 
 import copy
 
@@ -68,8 +69,8 @@ class PyriSandbox():
         if "pyri" in procedure_tags:
             pyri_src = procedure_src.data
         elif "blockly" in procedure_tags:
-            
-            pyri_src = self._blockly_compiler.compile(procedure_name, procedure_src.data)
+            blockly_blocks = get_all_blockly_blocks()
+            pyri_src = self._blockly_compiler.compile(procedure_name, procedure_src.data, blockly_blocks)
         else:
             assert False, "Invalid procedure type (must be pyri or blockly)"
         
@@ -112,7 +113,7 @@ class ExecuteProcedureGenerator:
             raise StopIterationException("Procedure completed")
 
         self._run = True
-        with PyriSandboxContextScope(self._node, self._device_manager, self._print_collector):
+        with PyriSandboxContextScope(self._node, self._device_manager, self._print_collector.write):
             #TODO: Execute in different thread
             exec(self._byte_code, self._globals, self._loc)
             if self._params is None:
