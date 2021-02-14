@@ -8,7 +8,7 @@ def sleep(t):
 
 class SandboxFunctionsPluginFactory(PyriSandboxFunctionsPluginFactory):
     def get_plugin_name(self):
-        return "pyri.sandbox"
+        return "pyri-sandbox"
 
     def get_sandbox_function_names(self):
         return ["sleep"]

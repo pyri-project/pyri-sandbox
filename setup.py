@@ -12,9 +12,11 @@ setup(
     include_package_data=True,
     zip_safe=False,
     install_requires=[
-        'pyri-common'
+        'pyri-common',
+        'appdirs',
+        'robotraconteur'
     ],
-    tests_require=['pytest','pytest-asyncio','appdirs'],
+    tests_require=['pytest','pytest-asyncio'],
     extras_require={
         'test': ['pytest','pytest-asyncio']
     },
