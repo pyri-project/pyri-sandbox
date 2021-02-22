@@ -12,6 +12,18 @@ python3 -m pip install -e .
 
 See https://github.com/pyri-project/pyri-core for more information on setting up the virtual environment.
 
+The sandbox requires NodeJS and npm to be installed. On Ubuntu, run:
+
+```
+sudo apt-get install nodejs npm
+```
+
+Once NodeJS and npm are installed, run the following command to configure the Blockly compiler:
+
+```
+pyri-sandbox-service --install-blockly-compiler
+```
+
 # Startup
 
 The `pyri-variable-storage` service must be running before use. See https://github.com/pyri-project/pyri-variable-storage
