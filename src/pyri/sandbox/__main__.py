@@ -18,7 +18,7 @@ def main():
         install_blockly_compiler()
         exit(0)
 
-    parser = argparse.ArgumentParser(description="PyRI Variable Storage Service Node")    
+    parser = argparse.ArgumentParser(description="PyRI Procedure Sandbox Service Node")    
     parser.add_argument("--device-info-file", type=argparse.FileType('r'),default=None,required=True,help="Device info file for sandbox service (required)")
     parser.add_argument('--device-manager-url', type=str, default=None,required=True,help="Robot Raconteur URL for device manager service (required)")
     parser.add_argument("--wait-signal",action='store_const',const=True,default=False, help="wait for SIGTERM or SIGINT (Linux only)")
