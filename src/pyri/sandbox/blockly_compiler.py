@@ -22,12 +22,13 @@ class BlocklyCompiler:
 
     def _call_p(self, arg):
         print("Begin req")
-        res = urllib.request.urlopen(f"{self._p_addr}?command=compile&arg={quote(arg)}")
+        res = urllib.request.urlopen(f"{self._p_addr}?command=compile&arg={quote(arg)}", timeout=5)
         res_line = res.read()
         res.close()
         print("End req")
         if res_line.decode('utf8').strip() != "done":
             #TODO: include error message
+            print(f"Blockly compile error {res_line}")
             raise Exception(f"Blockly compile error: {res_line.decode('utf8').strip()}")
 
     def compile(self, procedure_name, procedure_src, blockly_blocks):
