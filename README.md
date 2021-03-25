@@ -33,5 +33,5 @@ The `pyri-device-manager` service must be running before use. See https://github
 To start the service, run:
 
 ```
-pyri-sandbox-service --device-info-file=config/pyri_sandbox_default_info.yml --device-manager-url=rr+tcp://localhost:59902?service=device_manager
+pyri-sandbox-service --device-info-file=config/pyri_sandbox_default_info.yml --device-manager-url=rr+tcp://localhost:59902?service=device_manager --robotraconteur-tcp-ipv4-discovery=true
 ```
