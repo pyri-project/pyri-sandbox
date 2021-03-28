@@ -4,6 +4,7 @@ const fs = require('fs');
 const path = require('path');
 var Blockly = require('node-blockly');
 const { parse: parseQuery } = require('querystring');
+const { createCipher } = require('crypto');
 
 
 function reset_blockly()
@@ -60,17 +61,33 @@ function compile_blockly(working_dir)
     fs.readdirSync(working_dir).forEach(file => {
         if (file.match(/^blockdef_[A-Za-z0-9_]+\.json$/))
         {
+          try
+          {
             block_json_text = fs.readFileSync(path.join(working_dir,file), 'utf8')
             block_json = JSON.parse(block_json_text)
             Blockly.defineBlocksWithJsonArray([block_json])
+          }
+          catch (e)
+          {
+            e.message = "Error loading block definition \"" + file + "\": " + e.message;
+            throw e;
+          }
         }
 
         if (file.match(/^blockpygen_[A-Za-z0-9_]+\.js$/))
         {
+          try
+          {
             // We need to include the js generator directly. This isn't a secure design,
             // but there isn't much that can be done otherwise
             block_gen_js_text = fs.readFileSync(path.join(working_dir,file),'utf8')
             eval(block_gen_js_text)
+          }
+          catch (e)
+          {
+            e.message = "Error loading block generator \"" + file + "\": " + e.message;
+            throw e;
+          }
         }
     });
 
@@ -106,7 +123,7 @@ function do_compile(command, arg)
     }
     catch (e)
     {
-        return "error;" + JSON.stringify(e)
+        return "error;" + JSON.stringify({name: e.name, message: e.message})
     }
     
 }
