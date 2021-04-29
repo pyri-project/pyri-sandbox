@@ -9,7 +9,7 @@ from pyri.device_manager_client import DeviceManagerClient
 from .restricting_transformer import PyriRestrictingNodeTransformer
 from .blockly_compiler import BlocklyCompiler
 from . import guards
-from pyri.sandbox_context import PyriSandboxContext, PyriSandboxContextScope
+from pyri.sandbox_context import PyriSandboxContext, PyriSandboxContextScope, PyriSandboxActionRunner
 from pyri.plugins.sandbox_functions import get_all_plugin_sandbox_functions
 from pyri.plugins.blockly import get_all_blockly_blocks
 
@@ -107,13 +107,14 @@ class ExecuteProcedureGenerator:
         self._node = node
         self._device_manager = device_manager
         self._run = False
+        self._action_runner = PyriSandboxActionRunner()
 
     def Next(self):
         if self._run:
             raise StopIterationException("Procedure completed")
 
         self._run = True
-        with PyriSandboxContextScope(self._node, self._device_manager, self._print_collector.write):
+        with PyriSandboxContextScope(self._node, self._device_manager, self._print_collector.write, self._action_runner):
             #TODO: Execute in different thread
             exec(self._byte_code, self._globals, self._loc)
             if self._params is None:
