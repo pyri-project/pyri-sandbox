@@ -33,7 +33,7 @@ class PrintCollector:
         self.printed.append(text)
 
     def _call_print(self, text):
-        self.printed.append(text)
+        self.printed.append(str(text))
 
 
 class PyriSandbox():
