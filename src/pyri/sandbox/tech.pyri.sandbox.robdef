@@ -27,4 +27,6 @@ object PyriSandbox
 
     function ProcedureExecutionStatus{generator} execute_procedure(string procedure_name, string{list} parameters)
 
+    function void stop_all()
+
 end

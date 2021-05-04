@@ -14,6 +14,7 @@ from pyri.plugins.sandbox_functions import get_all_plugin_sandbox_functions
 from pyri.plugins.blockly import get_all_blockly_blocks
 
 import copy
+import sys
 
 _valid_name_re = re.compile('[a-zA-Z][a-zA-Z0-9_]*')
 _policy = PyriRestrictingNodeTransformer
@@ -54,6 +55,10 @@ class PyriSandbox():
         self._device_manager = DeviceManagerClient(device_manager_url)
         self._device_manager.refresh_devices(1)
 
+        self._executors = []
+        self._stopped = False
+        self._running = False
+
     def execute_procedure(self, procedure_name, params):
         
         if _valid_name_re.match(procedure_name) is None:
@@ -84,8 +89,19 @@ class PyriSandbox():
         sandbox_globals.update(plugin_sandbox_functions)
         print_collector = PrintCollector()
         sandbox_globals["_print_"] =print_collector
+        executor = ExecuteProcedureGenerator(self, procedure_name, byte_code, sandbox_builtins, sandbox_globals, loc, params, print_collector, self._node, self._device_manager, self._status_type)
+        with self._lock:
+            if self._stopped:
+                raise RR.InvalidOperationException("Sandbox is stopping")
+            self._executors.append(executor)
+        return executor
 
-        return ExecuteProcedureGenerator(procedure_name, byte_code, sandbox_builtins, sandbox_globals, loc, params, print_collector, self._node, self._device_manager, self._status_type)
+    def stop_all(self):
+        with self._lock:
+            self._stopped = True
+            ex = self._executors
+        for e in ex:
+            e._stopped()
 
     def _close(self):
         try:
@@ -93,9 +109,19 @@ class PyriSandbox():
         except:
             pass
 
+    def _execution_complete(self, executor):
+        with self._lock:
+            if executor in self._executors:
+                self._executors.remove(executor)
+                self._stopped = False
+                self._running = False
+class PyriSandboxStoppedError(BaseException):
+    pass
+
 class ExecuteProcedureGenerator:
 
-    def __init__(self, procedure_name, byte_code, builtins, sandbox_globals,loc, params, print_collector, node, device_manager, status_type):
+    def __init__(self, parent, procedure_name, byte_code, builtins, sandbox_globals,loc, params, print_collector, node, device_manager, status_type):
+        self._parent = parent
         self._procedure_name = procedure_name
         self._byte_code = byte_code
         self._bultins = builtins
@@ -108,36 +134,71 @@ class ExecuteProcedureGenerator:
         self._device_manager = device_manager
         self._run = False
         self._action_runner = PyriSandboxActionRunner()
+        self._is_stopped = False
 
     def Next(self):
-        if self._run:
-            raise StopIterationException("Procedure completed")
+        with self._parent._lock:
+            if self._run:
+                raise StopIterationException("Procedure completed")
+            self._run = True
+        
+        if self._is_stopped:
+            raise RR.OperationAbortedException("Procedure has been stopped")
 
-        self._run = True
-        with PyriSandboxContextScope(self._node, self._device_manager, self._print_collector.write, self._action_runner):
-            #TODO: Execute in different thread
-            exec(self._byte_code, self._globals, self._loc)
-            if self._params is None:
-                res = self._loc[self._procedure_name]()
-            else:
-                res = self._loc[self._procedure_name](*self._params)
+        old_trace = sys.gettrace()        
+        with self._parent._lock:
+            if self._parent._running:
+                raise RR.InvalidOperationException("Sandbox already running a procedure")
+            self._parent._running = True
+        try:
+                     
+            with PyriSandboxContextScope(self._node, self._device_manager, self._print_collector.write, self._action_runner):
+                sys.settrace(self._pyri_sandbox_trace)
+                #TODO: Execute in different thread
+                exec(self._byte_code, self._globals, self._loc)
+                if self._params is None:
+                    res = self._loc[self._procedure_name]()
+                else:
+                    res = self._loc[self._procedure_name](*self._params)
 
-            assert isinstance(res,str) or res is None, "Result of procedure must be string"
+                assert isinstance(res,str) or res is None, "Result of procedure must be string"
 
-            ret = self._status_type()
-            # TODO: use constants
-            ret.action_status = 3
-            ret.printed = self._print_collector.printed
-            ret.result_code = res or "SUCCESS"
+                ret = self._status_type()
+                # TODO: use constants
+                ret.action_status = 3
+                ret.printed = self._print_collector.printed
+                ret.result_code = res or "SUCCESS"
 
-            return ret
+                return ret
+        except PyriSandboxStoppedError:
+            raise RR.OperationAbortedException("Procedure has been stopped")
+        finally:
+            sys.settrace(old_trace)
+            self._parent._execution_complete(self)
 
     def Close(self):
-        pass
+        self._do_abort()
 
     def Abort(self):
-        pass
+        self._do_abort()
 
-        
+    def _stopped(self):
+        self._do_abort()
+
+    def _do_abort(self):
+        with self._parent._lock:
+            if not self._run:
+                self._run = True
+                self._parent._execution_complete(self)
+                return            
+        self._action_runner.abort()
+        self._is_stopped = True
+
+    def _pyri_sandbox_trace(self, frame, event, arg):
+        if self._is_stopped:
+            raise PyriSandboxStoppedError()
+
+
+       
 
         
