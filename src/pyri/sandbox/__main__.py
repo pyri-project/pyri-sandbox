@@ -11,6 +11,7 @@ import appdirs
 from pathlib import Path
 import subprocess
 from importlib import resources
+from pyri.util.robotraconteur import add_default_ws_origins
 
 def main():
 
@@ -23,6 +24,7 @@ def main():
     parser.add_argument('--device-manager-url', type=str, default=None,required=True,help="Robot Raconteur URL for device manager service (required)")
     parser.add_argument("--wait-signal",action='store_const',const=True,default=False, help="wait for SIGTERM or SIGINT (Linux only)")
     parser.add_argument("--install-blockly-compiler", action="store_true",default=False,help="Install the Blockly compiler for current user")
+    parser.add_argument("--pyri-webui-server-port",type=int,default=8000,help="The PyRI WebUI port for websocket origin (default 8000)")
     
     args, _ = parser.parse_known_args()
 
@@ -38,7 +40,9 @@ def main():
     attributes_util = AttributesUtil(RRN)
     device_attributes = attributes_util.GetDefaultServiceAttributesFromDeviceInfo(device_info)
 
-    with RR.ServerNodeSetup("tech.pyri.sandbox",59903,argv=sys.argv):
+    with RR.ServerNodeSetup("tech.pyri.sandbox",59903,argv=sys.argv) as node_setup:
+
+        add_default_ws_origins(node_setup.tcp_transport,args.pyri_webui_server_port)
 
         dev_manager = PyriSandbox(args.device_manager_url, device_info=device_info, node = RRN) 
 
