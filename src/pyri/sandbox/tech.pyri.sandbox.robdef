@@ -13,10 +13,33 @@ using com.robotraconteur.device.DeviceInfo
 using com.robotraconteur.identifier.Identifier
 using com.robotraconteur.action.ActionStatusCode
 
+enum ProcedureOutputTypeCode
+    generic = 0,
+    output = 1,
+    status,
+    info,
+    error,    
+    debug
+end
+
 struct ProcedureExecutionStatus
     field ActionStatusCode action_status
     field string{list} printed
     field string result_code
+end
+
+struct ProcedureOutput
+    field uint32 output_number
+    field ProcedureOutputTypeCode output_type
+    field DateTimeUTC time
+    field string procedure_name
+    field uint32 procedure_run_number
+    field string output
+end
+
+struct ProcedureOutputList
+    field uint32 first_output_number
+    field ProcedureOutput{list} output_list
 end
 
 object PyriSandbox
@@ -28,5 +51,7 @@ object PyriSandbox
     function ProcedureExecutionStatus{generator} execute_procedure(string procedure_name, string{list} parameters)
 
     function void stop_all()
+
+    function ProcedureOutputList{generator} getf_output()
 
 end
