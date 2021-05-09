@@ -299,9 +299,10 @@ class ExecuteProcedureGenerator:
             finally:
                 sys.settrace(old_trace)
                 self._parent._execution_complete(self)
-        except:
-            self._parent._send_print(f"Execute procedure \"{self._procedure_name}\" failed:\n\n{traceback.format_exc()}",
-                self._procedure_name, self._parent._output_codes["error"])
+        except BaseException as exp:
+            if not isinstance(exp,RR.StopIterationException):
+                self._parent._send_print(f"Execute procedure \"{self._procedure_name}\" failed:\n\n{traceback.format_exc()}",
+                    self._procedure_name, self._parent._output_codes["error"])
             raise
 
     def Close(self):
