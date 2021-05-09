@@ -187,6 +187,9 @@ class PyriSandboxOutputGenerator:
                 if self._closed:
                     raise RR.StopIterationException("")
 
+                if (len(self.parent._output) == 0):
+                    self._current_num = 0
+
                 if len(self.parent._output) > 0 and self._current_num < self.parent._output[-1].output_number:
                     if self._current_num < 0:
                         self._current_num = self.parent._output[-1].output_number
