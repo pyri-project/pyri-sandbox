@@ -126,9 +126,11 @@ class PyriSandbox():
             raise
 
     def stop_all(self):
-        with self._lock:
-            self._stopped = True
+        with self._lock:            
             ex = self._executors
+            if len(ex) != 0:
+                self._stopped = True
+
         for e in ex:
             e._stopped()
 
