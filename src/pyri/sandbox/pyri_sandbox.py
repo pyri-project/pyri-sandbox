@@ -285,9 +285,11 @@ class ExecuteProcedureGenerator:
                     #TODO: Execute in different thread
                     exec(self._byte_code, self._globals, self._loc)
                     if self._params is None:
-                        res = self._loc[self._procedure_name]()
+                        self._loc[self._procedure_name]()
                     else:
-                        res = self._loc[self._procedure_name](*self._params)
+                        self._loc[self._procedure_name](*self._params)
+
+                    res = PyriSandboxContext.proc_result
 
                     assert isinstance(res,str) or res is None, "Result of procedure must be string"
 
