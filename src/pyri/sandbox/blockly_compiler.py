@@ -8,10 +8,14 @@ import re
 from pathlib import Path
 import appdirs
 
-compiler_node_script = Path(appdirs.user_data_dir(appname="pyri-sandbox", appauthor="pyri-project", roaming=False)).joinpath("blockly_compiler").joinpath("blockly_compile.js")
+compiler_node_script_default = Path(appdirs.user_data_dir(appname="pyri-sandbox", appauthor="pyri-project", roaming=False)).joinpath("blockly_compiler").joinpath("blockly_compile.js")
 
 class BlocklyCompiler:
-    def __init__(self):
+    def __init__(self,compiler_dir = None):
+        if compiler_dir is None:
+            compiler_node_script = compiler_node_script_default
+        else:
+            compiler_node_script = Path(compiler_dir).joinpath("blockly_compile.js")
         self._p = subprocess.Popen(["node",compiler_node_script],stdout=subprocess.PIPE)
         init_line = self._p.stdout.readline().decode('utf8')
         init_line_match = re.match("^ready;(\d+)$", init_line.strip())

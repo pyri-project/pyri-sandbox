@@ -25,6 +25,7 @@ def main():
     parser.add_argument("--wait-signal",action='store_const',const=True,default=False, help="wait for SIGTERM or SIGINT (Linux only)")
     parser.add_argument("--install-blockly-compiler", action="store_true",default=False,help="Install the Blockly compiler for current user")
     parser.add_argument("--pyri-webui-server-port",type=int,default=8000,help="The PyRI WebUI port for websocket origin (default 8000)")
+    parser.add_argument("--blockly-compiler-dir",type=str,default=None,help="Directory containing blockly compiler NodeJS files")
     
     args, _ = parser.parse_known_args()
 
@@ -44,7 +45,7 @@ def main():
 
         add_default_ws_origins(node_setup.tcp_transport,args.pyri_webui_server_port)
 
-        dev_manager = PyriSandbox(args.device_manager_url, device_info=device_info, node = RRN) 
+        dev_manager = PyriSandbox(args.device_manager_url, device_info=device_info, node = RRN, blockly_compiler_dir = args.blockly_compiler_dir) 
 
         service_ctx = RRN.RegisterService("sandbox","tech.pyri.sandbox.PyriSandbox",dev_manager)
         service_ctx.SetServiceAttributes(device_attributes)
@@ -66,9 +67,15 @@ def main():
 def install_blockly_compiler():
     print("Installing blockly compiler...")
 
-    compiler_dir = Path(appdirs.user_data_dir(appname="pyri-sandbox", appauthor="pyri-project", roaming=False))
-    
-    compiler_dir = compiler_dir.joinpath("blockly_compiler")
+    parser = argparse.ArgumentParser(description="PyRI Procedure Sandbox Service Node") 
+    parser.add_argument("--blockly-compiler-dir",type=str,default=None,help="Directory containing blockly compiler NodeJS files")
+    args, _ = parser.parse_known_args()
+
+    if args.blockly_compiler_dir is not None:
+        compiler_dir = Path(args.blockly_compiler_dir)
+    else:
+        compiler_dir = Path(appdirs.user_data_dir(appname="pyri-sandbox", appauthor="pyri-project", roaming=False))    
+        compiler_dir = compiler_dir.joinpath("blockly_compiler")
     print(f"Installing compiler to: {compiler_dir}")
     compiler_dir.mkdir(exist_ok=True,parents=True)
     subprocess.check_call("npm install node-blockly",cwd=str(compiler_dir),shell=True)

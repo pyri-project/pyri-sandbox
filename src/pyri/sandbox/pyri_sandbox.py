@@ -46,20 +46,21 @@ class PrintCollector:
 
 class PyriSandbox():
 
-    def __init__(self, device_manager_url, device_info = None, node : RR.RobotRaconteurNode = None):
+    def __init__(self, device_manager_url, device_info = None, node : RR.RobotRaconteurNode = None, blockly_compiler_dir = None):
         self._lock = threading.RLock()
         if node is None:
             self._node = RR.RobotRaconteurNode.s
         else:
             self._node = node
         self.device_info = device_info
+        self._blockly_compiler_dir = blockly_compiler_dir
 
         self._status_type = self._node.GetStructureType('tech.pyri.sandbox.ProcedureExecutionStatus')
         self._action_const = self._node.GetConstants('com.robotraconteur.action')
         self._sandbox_const = self._node.GetConstants('tech.pyri.sandbox')
         self._output_codes = self._sandbox_const["ProcedureOutputTypeCode"]
         
-        self._blockly_compiler = BlocklyCompiler()
+        self._blockly_compiler = BlocklyCompiler(compiler_dir=self._blockly_compiler_dir)
 
         self._device_manager = DeviceManagerClient(device_manager_url)
         self._device_manager.refresh_devices(1)
