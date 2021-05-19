@@ -45,9 +45,9 @@ def main():
 
         add_default_ws_origins(node_setup.tcp_transport,args.pyri_webui_server_port)
 
-        dev_manager = PyriSandbox(args.device_manager_url, device_info=device_info, node = RRN, blockly_compiler_dir = args.blockly_compiler_dir) 
+        sandbox = PyriSandbox(args.device_manager_url, device_info=device_info, node = RRN, blockly_compiler_dir = args.blockly_compiler_dir) 
 
-        service_ctx = RRN.RegisterService("sandbox","tech.pyri.sandbox.PyriSandbox",dev_manager)
+        service_ctx = RRN.RegisterService("sandbox","tech.pyri.sandbox.PyriSandbox",sandbox)
         service_ctx.SetServiceAttributes(device_attributes)
 
         if args.wait_signal:  
@@ -62,7 +62,7 @@ def main():
             else:
                 raw_input("Server started, press enter to quit...")
 
-        dev_manager.close()
+        sandbox._close()
 
 def install_blockly_compiler():
     print("Installing blockly compiler...")
