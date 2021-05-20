@@ -10,6 +10,9 @@ setup(
     package_dir={'': 'src'},
     packages=find_namespace_packages(where='src'),
     include_package_data=True,
+    package_data = {
+        'pyri.sandbox': ['*.robdef','*.js']
+    },
     zip_safe=False,
     install_requires=[
         'pyri-common',
