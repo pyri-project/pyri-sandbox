@@ -6,12 +6,11 @@ from .pyri_sandbox import PyriSandbox
 import argparse
 from RobotRaconteurCompanion.Util.InfoFileLoader import InfoFileLoader
 from RobotRaconteurCompanion.Util.AttributesUtil import AttributesUtil
-from pyri.plugins import robdef as robdef_plugins
 import appdirs
 from pathlib import Path
 import subprocess
 from importlib import resources
-from pyri.util.robotraconteur import add_default_ws_origins
+from pyri.util.service_setup import PyriServiceNodeSetup
 
 def main():
 
@@ -20,47 +19,21 @@ def main():
         exit(0)
 
     parser = argparse.ArgumentParser(description="PyRI Procedure Sandbox Service Node")    
-    parser.add_argument("--device-info-file", type=argparse.FileType('r'),default=None,required=True,help="Device info file for sandbox service (required)")
-    parser.add_argument('--device-manager-url', type=str, default=None,required=True,help="Robot Raconteur URL for device manager service (required)")
-    parser.add_argument("--wait-signal",action='store_const',const=True,default=False, help="wait for SIGTERM or SIGINT (Linux only)")
     parser.add_argument("--install-blockly-compiler", action="store_true",default=False,help="Install the Blockly compiler for current user")
-    parser.add_argument("--pyri-webui-server-port",type=int,default=8000,help="The PyRI WebUI port for websocket origin (default 8000)")
     parser.add_argument("--blockly-compiler-dir",type=str,default=None,help="Directory containing blockly compiler NodeJS files")
     
-    args, _ = parser.parse_known_args()
+    with PyriServiceNodeSetup("tech.pyri.sandbox",59903,argv=sys.argv, \
+        default_info = (__package__,"pyri_sandbox_default_info.yml"), \
+        arg_parser = parser, register_plugin_robdef=True) as service_node_setup:
 
-    RRC.RegisterStdRobDefServiceTypes(RRN)
-    robdef_plugins.register_all_plugin_robdefs(RRN)
+        args = service_node_setup.argparse_results
 
-    with args.device_info_file:
-        device_info_text = args.device_info_file.read()
+        sandbox = PyriSandbox(service_node_setup.device_manager, device_info=service_node_setup.device_info_struct, \
+             node = RRN, blockly_compiler_dir = args.blockly_compiler_dir)
 
-    info_loader = InfoFileLoader(RRN)
-    device_info, device_ident_fd = info_loader.LoadInfoFileFromString(device_info_text, "com.robotraconteur.device.DeviceInfo", "device")
+        service_node_setup.register_service("sandbox","tech.pyri.sandbox.PyriSandbox",sandbox)
 
-    attributes_util = AttributesUtil(RRN)
-    device_attributes = attributes_util.GetDefaultServiceAttributesFromDeviceInfo(device_info)
-
-    with RR.ServerNodeSetup("tech.pyri.sandbox",59903,argv=sys.argv) as node_setup:
-
-        add_default_ws_origins(node_setup.tcp_transport,args.pyri_webui_server_port)
-
-        sandbox = PyriSandbox(args.device_manager_url, device_info=device_info, node = RRN, blockly_compiler_dir = args.blockly_compiler_dir) 
-
-        service_ctx = RRN.RegisterService("sandbox","tech.pyri.sandbox.PyriSandbox",sandbox)
-        service_ctx.SetServiceAttributes(device_attributes)
-
-        if args.wait_signal:  
-            #Wait for shutdown signal if running in service mode          
-            print("Press Ctrl-C to quit...")
-            import signal
-            signal.sigwait([signal.SIGTERM,signal.SIGINT])
-        else:
-            #Wait for the user to shutdown the service
-            if (sys.version_info > (3, 0)):
-                input("Server started, press enter to quit...")
-            else:
-                raw_input("Server started, press enter to quit...")
+        service_node_setup.wait_exit()
 
         sandbox._close()
 

@@ -46,7 +46,7 @@ class PrintCollector:
 
 class PyriSandbox():
 
-    def __init__(self, device_manager_url, device_info = None, node : RR.RobotRaconteurNode = None, blockly_compiler_dir = None):
+    def __init__(self, device_manager, device_info = None, node : RR.RobotRaconteurNode = None, blockly_compiler_dir = None):
         self._lock = threading.RLock()
         if node is None:
             self._node = RR.RobotRaconteurNode.s
@@ -62,8 +62,7 @@ class PyriSandbox():
         
         self._blockly_compiler = BlocklyCompiler(compiler_dir=self._blockly_compiler_dir)
 
-        self._device_manager = DeviceManagerClient(device_manager_url)
-        self._device_manager.refresh_devices(1)
+        self._device_manager = device_manager
 
         self._executors = []
         self._stopped = False
