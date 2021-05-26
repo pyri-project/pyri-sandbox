@@ -17,7 +17,8 @@ setup(
     install_requires=[
         'pyri-common',
         'appdirs',
-        'robotraconteur'
+        'robotraconteur',
+        'RestrictedPython'
     ],
     tests_require=['pytest','pytest-asyncio'],
     extras_require={
