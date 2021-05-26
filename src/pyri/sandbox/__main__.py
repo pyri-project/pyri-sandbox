@@ -11,6 +11,7 @@ from pathlib import Path
 import subprocess
 from importlib import resources
 from pyri.util.service_setup import PyriServiceNodeSetup
+import os
 
 def main():
 
@@ -28,8 +29,14 @@ def main():
 
         args = service_node_setup.argparse_results
 
+        blockly_compiler_dir = None
+        if args.blockly_compiler_dir is not None:
+            blockly_compiler_dir = args.blockly_compiler_dir
+        elif "PYRI_SANDBOX_BLOCKLY_COMPILER_DIR" in os.environ:
+            blockly_compiler_dir = os.environ["PYRI_SANDBOX_BLOCKLY_COMPILER_DIR"]
+
         sandbox = PyriSandbox(service_node_setup.device_manager, device_info=service_node_setup.device_info_struct, \
-             node = RRN, blockly_compiler_dir = args.blockly_compiler_dir)
+             node = RRN, blockly_compiler_dir = blockly_compiler_dir)
 
         service_node_setup.register_service("sandbox","tech.pyri.sandbox.PyriSandbox",sandbox)
 
