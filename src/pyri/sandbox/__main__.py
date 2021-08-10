@@ -25,7 +25,8 @@ def main():
     
     with PyriServiceNodeSetup("tech.pyri.sandbox",59903,argv=sys.argv, \
         default_info = (__package__,"pyri_sandbox_default_info.yml"), \
-        arg_parser = parser, register_plugin_robdef=True) as service_node_setup:
+        arg_parser = parser, register_plugin_robdef=True,
+        distribution_name="pyri-sandbox") as service_node_setup:
 
         args = service_node_setup.argparse_results
 
