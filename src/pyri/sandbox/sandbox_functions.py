@@ -11,10 +11,10 @@ class SandboxFunctionsPluginFactory(PyriSandboxFunctionsPluginFactory):
         return "pyri-sandbox"
 
     def get_sandbox_function_names(self):
-        return ["sleep"]
+        return [] #["sleep"]
 
     def get_sandbox_functions(self):
-        return {"sleep": sleep}
+        return {} #{"sleep": sleep}
 
 
 def get_sandbox_functions_factory():
