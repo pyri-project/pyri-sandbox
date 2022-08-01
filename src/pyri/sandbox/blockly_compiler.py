@@ -127,16 +127,8 @@ def get_compile_request_args(procedure_name, procedure_src, blockly_blocks):
         "blockly_blocks": blockly_blocks_list
     }
 
-def main():
-
-    parser = argparse.ArgumentParser(description='Compile a Blockly XML file to Python')
-    parser.add_argument('--arg-file',type=argparse.FileType('w'),default=None,help="Output compiler argument to file")
-    parser.add_argument('--output',type=argparse.FileType('w'),default=None,help="Output filename")
-    parser.add_argument('file', type=argparse.FileType('r'), help="Blockly XML file to compile")
-
-    args = parser.parse_args()
-
-    xml_src = args.file.read()
+def compile_blockly_file(file, output=None, arg_file=None):
+    xml_src = file.read()
     p1 = ET.fromstring(xml_src)
     ns={"xmlns": "https://developers.google.com/blockly/xml"}
     p2 = p1.findall("./xmlns:block[@type='procedures_defnoreturn']/xmlns:field[@name='NAME']",ns)
@@ -146,9 +138,9 @@ def main():
     from pyri.plugins.blockly import get_all_blockly_blocks
     blockly_blocks = get_all_blockly_blocks()
 
-    if args.arg_file is not None:
+    if arg_file is not None:
         args_json = get_compile_request_args(procedure_name, xml_src, blockly_blocks)
-        json.dump(args_json, args.arg_file)
+        json.dump(args_json, arg_file)
         return
     compiler_dir = os.environ.get("PYRI_SANDBOX_BLOCKLY_COMPILER_DIR",None)
     compiler = BlocklyCompiler(compiler_dir)
@@ -160,12 +152,21 @@ def main():
         except:
             pass
 
-    if args.output is not None:
-        with args.ofile as f:
-            f.write(py_src)
+    if output is not None:
+        output.write(py_src)
     else:
         print(py_src)
 
+def main():
+
+    parser = argparse.ArgumentParser(description='Compile a Blockly XML file to Python')
+    parser.add_argument('--arg-file',type=argparse.FileType('w'),default=None,help="Output compiler argument to file")
+    parser.add_argument('--output',type=argparse.FileType('w'),default=None,help="Output filename")
+    parser.add_argument('file', type=argparse.FileType('r'), help="Blockly XML file to compile")
+
+    args = parser.parse_args()
+
+    compile_blockly_file(args.file,args.output,args.arg_file)
     
 
 if __name__ == "__main__":
