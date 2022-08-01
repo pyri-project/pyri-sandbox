@@ -2,7 +2,7 @@
 
 The node.js script `blockly_compile.js`  is used to compile Blockly programs into Python, since Blockly is a JavaScript 
 application and can't be used directly in Python. The source script in this directory is combined into a single
-file, installed into the Python directory using the command `npm install_blockly_compiler`. For development,
+file, installed into the Python directory using the command `python install_blockly_compiler.py`. For development,
 the `PYRI_SANDBOX_BLOCKLY_COMPILER_DIR` can be set to the directory containing `blockly_compile.js`.
 
 The node program is designed to use the same format as Chrome "Native Messaging",

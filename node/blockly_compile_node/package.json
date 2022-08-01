@@ -2,8 +2,12 @@
     "name": "pyri-sandbox-blockly-compiler",
     "version": "0.0.1",
     "dependencies": {
+        "@vercel/ncc": "^0.34.0",
         "blockly": "^8.0.3",
         "chrome-native-messaging": "^0.2.0",
         "serialize-error": "^11.0.0"
+    },
+    "scripts": {
+        "build_blockly_compiler": "ncc build blockly_compile.js"
     }
 }
