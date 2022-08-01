@@ -1,0 +1,9 @@
+{
+    "name": "pyri-sandbox-blockly-compiler",
+    "version": "0.0.1",
+    "dependencies": {
+        "blockly": "^8.0.3",
+        "chrome-native-messaging": "^0.2.0",
+        "serialize-error": "^11.0.0"
+    }
+}
