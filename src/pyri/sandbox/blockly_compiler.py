@@ -119,7 +119,7 @@ class BlocklyCompiler:
 
 def get_compile_request_args(procedure_name, procedure_src, blockly_blocks):
 
-    blockly_blocks_list = [{"blockly_json": b.json, "blockly_pygen": b.python_generator} for b in blockly_blocks.values()]
+    blockly_blocks_list = [{"blockly_json": b.blockly_json, "blockly_pygen": b.python_generator} for b in blockly_blocks.values()]
 
     return {
         "name": procedure_name,

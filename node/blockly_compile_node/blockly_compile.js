@@ -3,6 +3,7 @@
 const nativeMessage = require('chrome-native-messaging');
 const fs = require('fs');
 let Blockly = require('blockly');
+const blockly_compile_util = require('./blockly_compile_util')
 
 function reset_blockly() {
     let removeNamesBlockly = Object.keys(Blockly.Blocks).filter(x => !defaultBlocklyNames.includes(x));
@@ -24,30 +25,33 @@ function compile_blockly(args) {
 
     const xmlText = args.blockly_xml_src;
 
-    args.blockly_blocks.forEach(b => {
-        let block_json = {"name": "unknown"}
-        try {
-            let block_json_text = b.blockly_json;
-            block_json = JSON.parse(block_json_text)
-            Blockly.defineBlocksWithJsonArray([block_json])
-        }
-        catch (e) {
-            e.message = "Error loading block definition \"" + file + "\": " + e.message;
-            throw e;
-        }
+    blockly_compile_util.load_blockly_blocks(args.blockly_blocks)
 
-        try {
-            // We need to include the js generator directly. This isn't a secure design,
-            // but there isn't much that can be done otherwise
-            let block_gen_js_text = b.blockly_pygen;
-            eval(block_gen_js_text)
-        }
-        catch (e) {
-            e.message = "Error loading block generator \"" + block_json.name + "\": " + e.message;
-            throw e;
-        }
+    // args.blockly_blocks.forEach(b => {
+    //     let block_json = {"name": "unknown"}
+    //     try {
+    //         //let block_json_text = b.blockly_json;
+    //         //block_json = JSON.parse(block_json_text)
+    //         let block_json = b.blockly_json
+    //         Blockly.defineBlocksWithJsonArray([block_json])
+    //     }
+    //     catch (e) {
+    //         e.message = "Error loading block definition \"" + block_json.name + "\": " + e.message;
+    //         throw e;
+    //     }
 
-    });
+    //     try {
+    //         // We need to include the js generator directly. This isn't a secure design,
+    //         // but there isn't much that can be done otherwise
+    //         let block_gen_js_text = b.blockly_pygen;
+    //         eval(block_gen_js_text)
+    //     }
+    //     catch (e) {
+    //         e.message = "Error loading block generator \"" + block_json.name + "\": " + e.message;
+    //         throw e;
+    //     }
+
+    // });
 
     let xml = Blockly.Xml.textToDom(xmlText);
 
@@ -82,33 +86,7 @@ function do_compile(msg) {
 
 }
 
-Blockly.Python.finish = function (code) {
-    // Convert the definitions dictionary into a list.
-    let imports = [];
-    let definitions = [];
-    for (let name in Blockly.Python.definitions_) {
-        let def = Blockly.Python.definitions_[name];
-        // TODO: Don't add top level variables. Find better way to handle this
-        if (name === 'variables') {
-            continue;
-        }
-
-        def = def.replace(/^\s*global\s+.*$/m, '');
-
-        if (def.match(/^(from\s+\S+\s+)?import\s+\S+/)) {
-            imports.push(def);
-        } else {
-            definitions.push(def);
-        }
-    }
-    // Clean up temporary data.
-    delete Blockly.Python.definitions_;
-    delete Blockly.Python.functionNames_;
-    Blockly.Python.variableDB_.reset();
-    let allDefs = definitions.join('\n\n');
-    return allDefs.replace(/\n\n+/g, '\n\n').replace(/\n*$/, '\n\n\n') + code;
-
-};
+Blockly.Python.finish = blockly_compile_util.blockly_finish;
 
 const defaultBlocklyNames = Object.keys(Blockly.Blocks);
 const defaultPythonNames = Object.keys(Blockly.Python);
