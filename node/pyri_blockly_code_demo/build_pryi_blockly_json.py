@@ -17,7 +17,9 @@ def get_toolbox_json(blocks):
 
     cat = get_all_blockly_categories()
     for c in cat.values():
-        c_json = json.loads(c.json)
+        c_json = c.blockly_json
+        if isinstance(c_json,str):
+            c_json = json.loads(c_json)
         c_name = c_json["name"]
         if c_name in blocks_by_category:
             contents = []
