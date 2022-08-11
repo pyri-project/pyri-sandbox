@@ -480,9 +480,9 @@
  
    //Code.loadBlocks('');
    //Blockly.defineBlocksWithJsonArray(PYRI_BLOCKLY_BLOCKS);
-   load_blockly_blocks(PYRI_BLOCKLY_BLOCKS);
+   load_blockly_blocks.bind({"Blockly": Blockly})(PYRI_BLOCKLY_BLOCKS);
 
-   Blockly.Python.finish = blockly_finish;
+   Blockly.Python.finish = blockly_finish.bind({"Blockly": Blockly});
 
    let xml_dom = Blockly.Xml.textToDom(new_procedure)
    Blockly.Xml.domToWorkspace(xml_dom,Code.workspace)
