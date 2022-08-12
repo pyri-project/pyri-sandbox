@@ -38,6 +38,7 @@ class BlocklyCompiler:
         self._p_keepalive_timer_interval = 15
         with self._p_keepalive_timer_lock:
             self._p_keepalive_timer = threading.Timer(interval=self._p_keepalive_timer_interval, function=self._p_keepalive)
+            self._p_keepalive_timer.daemon = True
             self._p_keepalive_timer.start()
             self._p_last_keepalive = time.time()
 
@@ -74,9 +75,14 @@ class BlocklyCompiler:
             with self._p_keepalive_timer_lock:
                 if  self._p_keepalive_timer_keep_going:
                     self._p_keepalive_timer = threading.Timer(interval=self._p_keepalive_timer_interval, function=self._p_keepalive)
+                    self._p_keepalive_timer.daemon=True
                     self._p_keepalive_timer.start()
 
-    def compile(self, procedure_name, procedure_src, blockly_blocks):
+    def compile(self, procedure_name, procedure_src, blockly_blocks = None):
+
+        if blockly_blocks is None:
+            from pyri.plugins.blockly import get_all_blockly_blocks
+            blockly_blocks = get_all_blockly_blocks()
 
         arg = get_compile_request_args(procedure_name, procedure_src, blockly_blocks)
         send_msg = {"command": "compile", "arg": arg}
@@ -95,8 +101,8 @@ class BlocklyCompiler:
         except:
             pass
         
-        _p = self._call_p
-        self._call_p = None
+        _p = self._p
+        self._p = None
 
         try:
             locked = self._p_lock.acquire(blocking=True,timeout=2)
@@ -114,6 +120,12 @@ class BlocklyCompiler:
             pass
         try:
             _p.terminate()
+        except:
+            pass
+
+    def __del__(self):
+        try:
+            self.close()
         except:
             pass
 
