@@ -48,9 +48,12 @@ function load_blockly_block(b) {
 function sandbox_function_pygen(block)
 {
     let block_fields = {};
-    this.blockly_json.args0.forEach(f => {
-        block_fields[f.name] = f.type;
-    })
+    if (this.blockly_json.args0)
+        {
+        this.blockly_json.args0.forEach(f => {
+            block_fields[f.name] = f.type;
+        })
+    }
 
     let sandbox_name = this.sandbox_function_name;
     if (!sandbox_name)
@@ -66,34 +69,37 @@ function sandbox_function_pygen(block)
 
     let python_args = [];
 
-    this.sandbox_function_arguments.forEach(a => {
-        if (block_fields[a.blockly_arg_name].startsWith("input"))
-        {
-            python_args.push(this.Blockly.Python.valueToCode(block, a.blockly_arg_name, this.Blockly.Python.ORDER_ATOMIC));
-        }
-        else
-        {
-            switch(a.arg_interpretation)
+    if (this.sandbox_function_arguments)
+    {
+        this.sandbox_function_arguments.forEach(a => {
+            if (block_fields[a.blockly_arg_name].startsWith("input"))
             {
-                case "code":            
-                    python_args.push(this.Blockly.Python.valueToCode(block, a.blockly_arg_name, this.Blockly.Python.ORDER_ATOMIC))
-                    break;
-                case "int":
-                    python_args.push("int(" + block.getFieldValue(a.blockly_arg_name) + ")")
-                    break
-                case "float":
-                    python_args.push("float(" + block.getFieldValue(a.blockly_arg_name) + ")")
-                    break
-                case "bool":
-                    python_args.push("True" ? block.getFieldValue(a.blockly_arg_name).toUppercase() == "TRUE" : "False")
-                    break
-                default:
-                    python_args.push("\"" + block.getFieldValue(a.blockly_arg_name) + "\"")
-                    break;
+                python_args.push(this.Blockly.Python.valueToCode(block, a.blockly_arg_name, this.Blockly.Python.ORDER_ATOMIC));
             }
-            
-        }
-    })
+            else
+            {
+                switch(a.arg_interpretation)
+                {
+                    case "code":            
+                        python_args.push(this.Blockly.Python.valueToCode(block, a.blockly_arg_name, this.Blockly.Python.ORDER_ATOMIC))
+                        break;
+                    case "int":
+                        python_args.push("int(" + block.getFieldValue(a.blockly_arg_name) + ")")
+                        break
+                    case "float":
+                        python_args.push("float(" + block.getFieldValue(a.blockly_arg_name) + ")")
+                        break
+                    case "bool":
+                        python_args.push("True" ? block.getFieldValue(a.blockly_arg_name).toUppercase() == "TRUE" : "False")
+                        break
+                    default:
+                        python_args.push("\"" + block.getFieldValue(a.blockly_arg_name) + "\"")
+                        break;
+                }
+                
+            }
+        })
+    }
     
     let code = sandbox_name + "(" + python_args.join(", ") + ")";
 
@@ -103,7 +109,7 @@ function sandbox_function_pygen(block)
     }
     else
     {
-        return  [code, Blockly_.Python.ORDER_NONE];
+        return  [code, this.Blockly.Python.ORDER_NONE];
     }
 }
 
