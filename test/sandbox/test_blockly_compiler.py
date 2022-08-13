@@ -1,15 +1,5 @@
-from pyri.sandbox import blockly_compiler
-import io
+from pyri.sandbox.util import run_blockly_compile_test
 
-def _do_blockly_compile_test(blockly_json, expected_pysrc):
-    json_io = io.StringIO(blockly_json)
-    output_io = io.StringIO()
-
-    blockly_compiler.compile_blockly_file(json_io, output_io)
-    output_io.seek(0)
-    pysrc_str = output_io.read()
-    print(pysrc_str)
-    assert pysrc_str == expected_pysrc
 
 def test_blockly_compiler_simple():
     hello_world_blockly_json = \
@@ -60,7 +50,7 @@ def test_blockly_compiler_simple():
 """
     expected_pysrc = "# Describe this function...\ndef hello_world_blockly():\n  print('Hello World from Blockly!')\n"
 
-    _do_blockly_compile_test(hello_world_blockly_json, expected_pysrc)
+    run_blockly_compile_test(hello_world_blockly_json, expected_pysrc)
     
 
 def test_blockly_compiler_util():
@@ -185,7 +175,7 @@ def test_blockly_compiler_util():
 
     expected_pysrc = "# Describe this function...\ndef util_blocks_test():\n\n  if (proc_result_get()) == 'SUCCESS':\n    val = proc_result_get()\n  val = util_copy('aaaa')\n"
     
-    _do_blockly_compile_test(util_blockly_json, expected_pysrc)
+    run_blockly_compile_test(util_blockly_json, expected_pysrc)
 
 def test_blockly_compiler_globals():
     globals_blockly_json = \
@@ -369,7 +359,7 @@ def test_blockly_compiler_globals():
 """
 
     expected_pysrc = "# Describe this function...\ndef globals_test():\n\n  if 2 <= (global_variable_get(\"bad_var\")):\n    for count in range(3):\n      global_variable_set(\"my_global\", 'bbbbb')\n      val = global_variable_get(\"my_global2\")\n      global_variable_add('abcde', \"NUMBER\", 1.2345, \"NORMAL\", 6.789)\n      global_variable_delete(\"my_dumb_var\")\n"    
-    _do_blockly_compile_test(globals_blockly_json, expected_pysrc)
+    run_blockly_compile_test(globals_blockly_json, expected_pysrc)
 
 
 def test_blockly_compiler_time():
@@ -432,7 +422,7 @@ def test_blockly_compiler_time():
 """
 
     expected_pysrc = "# Describe this function...\ndef test_time():\n  time_wait(float(1))\n  time_wait_for_completion(\"my_robot2\", float(25.2))\n  time_wait_for_completion_all(float(1.5))\n"
-    _do_blockly_compile_test(time_blockly_json, expected_pysrc)
+    run_blockly_compile_test(time_blockly_json, expected_pysrc)
 
 
 def test_blockly_compiler_time():
@@ -495,7 +485,7 @@ def test_blockly_compiler_time():
 """
 
     expected_pysrc = "# Describe this function...\ndef test_time():\n  time_wait(float(1))\n  time_wait_for_completion(\"my_robot2\", float(25.2))\n  time_wait_for_completion_all(float(1.5))\n"
-    _do_blockly_compile_test(time_blockly_json, expected_pysrc)
+    run_blockly_compile_test(time_blockly_json, expected_pysrc)
 
 def test_blockly_compiler_linalg():
     linalg_blockly_json = \
@@ -2030,7 +2020,7 @@ def test_blockly_compiler_linalg():
       "  val6 = linalg_matrix_set_elem(val3, 1, 2, 2.223)\n" \
       "  val6 = linalg_matrix_size(val3)\n"
 
-    _do_blockly_compile_test(linalg_blockly_json, expected_pysrc)
+    run_blockly_compile_test(linalg_blockly_json, expected_pysrc)
   
 
 def test_blockly_compiler_geometry():
@@ -2317,4 +2307,4 @@ def test_blockly_compiler_geometry():
         "  var3 = geometry_pose_multiply(var1, var1)\n" \
         "  var3 = geometry_pose_inv(var1)\n"
 
-    _do_blockly_compile_test(geometry_blockly_json, expected_pysrc)
+    run_blockly_compile_test(geometry_blockly_json, expected_pysrc)
