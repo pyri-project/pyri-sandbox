@@ -7,7 +7,6 @@ from urllib.parse import quote
 import re
 from pathlib import Path
 import argparse
-import xml.etree.ElementTree as ET
 import json
 import importlib_resources
 import sys
@@ -16,6 +15,7 @@ import struct
 import threading
 import time
 import traceback
+from pyri.plugins.blockly import blockly_block_to_json
 
 if sys.platform == "win32":
     import msvcrt
@@ -38,6 +38,7 @@ class BlocklyCompiler:
         self._p_keepalive_timer_interval = 15
         with self._p_keepalive_timer_lock:
             self._p_keepalive_timer = threading.Timer(interval=self._p_keepalive_timer_interval, function=self._p_keepalive)
+            self._p_keepalive_timer.daemon = True
             self._p_keepalive_timer.start()
             self._p_last_keepalive = time.time()
 
@@ -74,9 +75,14 @@ class BlocklyCompiler:
             with self._p_keepalive_timer_lock:
                 if  self._p_keepalive_timer_keep_going:
                     self._p_keepalive_timer = threading.Timer(interval=self._p_keepalive_timer_interval, function=self._p_keepalive)
+                    self._p_keepalive_timer.daemon=True
                     self._p_keepalive_timer.start()
 
-    def compile(self, procedure_name, procedure_src, blockly_blocks):
+    def compile(self, procedure_name, procedure_src, blockly_blocks = None):
+
+        if blockly_blocks is None:
+            from pyri.plugins.blockly import get_all_blockly_blocks
+            blockly_blocks = get_all_blockly_blocks()
 
         arg = get_compile_request_args(procedure_name, procedure_src, blockly_blocks)
         send_msg = {"command": "compile", "arg": arg}
@@ -95,8 +101,8 @@ class BlocklyCompiler:
         except:
             pass
         
-        _p = self._call_p
-        self._call_p = None
+        _p = self._p
+        self._p = None
 
         try:
             locked = self._p_lock.acquire(blocking=True,timeout=2)
@@ -117,35 +123,45 @@ class BlocklyCompiler:
         except:
             pass
 
+    def __del__(self):
+        try:
+            self.close()
+        except:
+            pass
+
 def get_compile_request_args(procedure_name, procedure_src, blockly_blocks):
 
-    blockly_blocks_list = [{"blockly_json": b.json, "blockly_pygen": b.python_generator} for b in blockly_blocks.values()]
+    blockly_blocks_list = [blockly_block_to_json(b) for b in blockly_blocks.values()]
+
+    if (isinstance(procedure_src,str)):
+        procedure_src = json.loads(procedure_src)
 
     return {
         "name": procedure_name,
-        "blockly_xml_src": procedure_src,
+        "blockly_json_src": procedure_src,
         "blockly_blocks": blockly_blocks_list
     }
 
 def compile_blockly_file(file, output=None, arg_file=None):
-    xml_src = file.read()
-    p1 = ET.fromstring(xml_src)
-    ns={"xmlns": "https://developers.google.com/blockly/xml"}
-    p2 = p1.findall("./xmlns:block[@type='procedures_defnoreturn']/xmlns:field[@name='NAME']",ns)
-    assert len(p2) == 1, "More than one root procedure block found in XML!"
-    procedure_name = p2[0].text.strip()
+    json_src = file.read()
+    json_dict = json.loads(json_src)
+    blocks1 = json_dict["blocks"]["blocks"]
+    assert len(blocks1) == 1, "Expect one procedures_defnoreturn top level block for procedure"
+    block2 = blocks1[0]
+    assert block2["type"] == "procedures_defnoreturn", "Expect one procedures_defnoreturn top level block for procedure"
+    procedure_name = block2["fields"]["NAME"]
     
     from pyri.plugins.blockly import get_all_blockly_blocks
     blockly_blocks = get_all_blockly_blocks()
 
     if arg_file is not None:
-        args_json = get_compile_request_args(procedure_name, xml_src, blockly_blocks)
+        args_json = get_compile_request_args(procedure_name, json_src, blockly_blocks)
         json.dump(args_json, arg_file)
         return
     compiler_dir = os.environ.get("PYRI_SANDBOX_BLOCKLY_COMPILER_DIR",None)
     compiler = BlocklyCompiler(compiler_dir)
     try:
-        py_src = compiler.compile(procedure_name, xml_src, blockly_blocks)
+        py_src = compiler.compile(procedure_name, json_src, blockly_blocks)
     finally:
         try:
             compiler.close()
@@ -159,10 +175,10 @@ def compile_blockly_file(file, output=None, arg_file=None):
 
 def main():
 
-    parser = argparse.ArgumentParser(description='Compile a Blockly XML file to Python')
+    parser = argparse.ArgumentParser(description='Compile a Blockly JSON file to Python')
     parser.add_argument('--arg-file',type=argparse.FileType('w'),default=None,help="Output compiler argument to file")
     parser.add_argument('--output',type=argparse.FileType('w'),default=None,help="Output filename")
-    parser.add_argument('file', type=argparse.FileType('r'), help="Blockly XML file to compile")
+    parser.add_argument('file', type=argparse.FileType('r'), help="Blockly JSON file to compile")
 
     args = parser.parse_args()
 
