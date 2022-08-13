@@ -90,7 +90,7 @@ function sandbox_function_pygen(block)
                         python_args.push("float(" + block.getFieldValue(a.blockly_arg_name) + ")")
                         break
                     case "bool":
-                        python_args.push("True" ? block.getFieldValue(a.blockly_arg_name).toUpperCase() == "TRUE" : "False")
+                        python_args.push(block.getFieldValue(a.blockly_arg_name).toUpperCase() == "TRUE" ? "True" : "False")
                         break
                     default:
                         python_args.push("\"" + block.getFieldValue(a.blockly_arg_name) + "\"")
