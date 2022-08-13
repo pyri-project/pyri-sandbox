@@ -479,6 +479,50 @@ class PyriRestrictingNodeTransformer(RestrictingNodeTransformer):
         ret_node = super().visit_Module(node)
         return ret_node
 
+    def transform_slice(self, slice_):
+
+        #Workaround for Python 3.9
+        if isinstance(slice_, ast.Index):
+            return slice_.value
+
+        elif isinstance(slice_, ast.Slice):
+            # Create a python slice object.
+            args = []
+
+            if slice_.lower:
+                args.append(slice_.lower)
+            else:
+                args.append(self.gen_none_node())
+
+            if slice_.upper:
+                args.append(slice_.upper)
+            else:
+                args.append(self.gen_none_node())
+
+            if slice_.step:
+                args.append(slice_.step)
+            else:
+                args.append(self.gen_none_node())
+
+            return ast.Call(
+                func=ast.Name('slice', ast.Load()),
+                args=args,
+                keywords=[])
+
+        if isinstance(slice_, ast.ExtSlice):
+            dims = ast.Tuple([], ast.Load())
+            for item in slice_.dims:
+                dims.elts.append(self.transform_slice(item))
+            return dims
+        elif isinstance(slice_, ast.Tuple):
+            dims = ast.Tuple([], ast.Load())
+            for item in slice_.dims:
+                dims.elts.append(self.transform_slice(item))
+            return dims
+        
+        
+        return super().transform_slice(slice_)
+
 class _NestedFunctionCheck(ast.NodeVisitor):
 
     def __init__(self):
