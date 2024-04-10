@@ -1,7 +1,7 @@
 [project]
 
 name = "pyri-sandbox"
-version = "0.2.0"
+version = "0.3.0"
 description = "PyRI Teach Pendant User Software Sandbox"
 readme = "README.md"
 requires-python = ">=3.8"
@@ -19,7 +19,8 @@ classifiers = [
 dependencies = [
     'pyri-common',
     'appdirs',
-    'robotraconteur',
+    'RobotRaconteur>=1.2.0',
+    'RobotRaconteurCompanion>=0.4.0',
     'RestrictedPython'   
 ]
 
@@ -51,3 +52,6 @@ requires = [
     'setuptools',
     'toml',
 ]
+
+[tool.setuptools.package-data]
+'pyri.sandbox' = ['*.robdef','*.js','*.yml']
